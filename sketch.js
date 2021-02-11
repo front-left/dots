@@ -2,9 +2,11 @@ var width;
 var height;
 var curX = window.innerWidth/2;
 var curY = window.innerHeight/2;
-const rows = 40;
-const cols = 40;
+const cols = 20;
+const margin = 100;
+const rows = Math.round((window.innerWidth-2*margin)*cols/(window.innerHeight-2*margin));
 var dots = [];
+
 
 class Dot{
 	constructor(){
@@ -22,10 +24,33 @@ class Dot{
 	}
 	
 	update(){
-		this.x = this.baseX;
-		this.y = this.baseY;
+		
+		var d = dist(mouseX, mouseY, this.baseX, this.baseY);
+		// console.log(d);
+		if (1===1){
+			// +1 to stop being infinite where dist is 0
+			var amount =  1500* 1/((0.5*d)+0.00001);
+			if (amount > 50){
+				amount = 50;
+			}
+			var dx = this.baseX- mouseX;
+			// Y reversed because coordinate system starts in top left corner
+			var dy = this.baseY - mouseY;
+			var angle = Math.atan2(dy, dx);
+			this.x = this.baseX + amount * Math.cos(angle);
+			this.y = this.baseY + amount * Math.sin(angle);
+			// console.log(this.x);
+			stroke('rgba(0,0,0,1)');
+			strokeWeight(1);
+			line(this.x,this.y,this.baseX,this.baseY);
+		} else {
+			this.x = this.baseX;
+			this.y = this.baseY;
+		}
 	}
 }
+
+
 
 function setup(){
 	width = window.innerWidth;
@@ -42,8 +67,9 @@ function setup(){
 }
 
 function draw(){
+	clear();
 	for (dot of dots){
 		dot.update();
-		dot.draw();
+		// dot.draw();
 	}
 }
