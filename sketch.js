@@ -14,6 +14,8 @@ class Dot{
 		this.baseY = 0;
 		this.x = 0;
 		this.y = 0;
+		this.xi = 0;
+		this.yi = 0;
 		this.radius = 3;
 	}
 	
@@ -23,8 +25,7 @@ class Dot{
 		circle(this.x,this.y,this.radius);
 	}
 	
-	update(){
-		
+	mouseVersion(){
 		var d = dist(mouseX, mouseY, this.baseX, this.baseY);
 		// console.log(d);
 		if (1===1){
@@ -48,6 +49,22 @@ class Dot{
 			this.y = this.baseY;
 		}
 	}
+	
+	sinVersion(){
+		// console.log(millis());
+		let t = millis()*0.003;
+		// can just replace with offset rather than baseX/baseY twice
+		this.x = this.baseX + sin(t+(this.xi*0.5))*10;
+		this.y = this.baseY + cos(t+(this.xi*0.5))*10;
+		stroke('rgba(0,0,0,1)');
+		strokeWeight(1);
+		line(this.x,this.y,this.baseX,this.baseY);
+	}
+	
+	update(){
+		// this.mouseVersion();
+		this.sinVersion();
+	}
 }
 
 
@@ -61,6 +78,8 @@ function setup(){
 			var dot = new Dot;
 			dot.baseX = ((i/(rows-1)) * (width-200))    + 100;
 			dot.baseY = ((j/(cols-1)) * (height-200))   + 100;
+			dot.xi = i;
+			dot.yi = j;
 			dots.push(dot);
 		}
 	}
