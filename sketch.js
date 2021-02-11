@@ -21,10 +21,21 @@ class Dot{
 		this.radius = 3;
 	}
 	
-	draw(){
+	drawDot(){
 		noStroke();
 		fill('rgba(0,0,0,1)');
 		circle(this.x,this.y,this.radius);
+	}
+	
+	drawLine(){
+		stroke('rgba(0,0,0,1)');
+		strokeWeight(1);
+		line(this.x,this.y,this.baseX,this.baseY);
+	}
+	
+	draw(){
+		this.drawDot();
+		// this.drawLine();
 	}
 	
 	mouseVersion(){
@@ -43,9 +54,7 @@ class Dot{
 			this.x = this.baseX + amount * Math.cos(angle);
 			this.y = this.baseY + amount * Math.sin(angle);
 			// console.log(this.x);
-			stroke('rgba(0,0,0,1)');
-			strokeWeight(1);
-			line(this.x,this.y,this.baseX,this.baseY);
+			
 		} else {
 			this.x = this.baseX;
 			this.y = this.baseY;
@@ -58,9 +67,6 @@ class Dot{
 		// can just replace with offset rather than baseX/baseY twice
 		this.x = this.baseX + sin((t*(this.xi+0.0001)*2) + this.yi)*30;
 		this.y = this.baseY + cos((t*(this.xi+0.0001)*2) + this.yi)*30;
-		stroke('rgba(0,0,0,1)');
-		strokeWeight(1);
-		line(this.x,this.y,this.baseX,this.baseY);
 	}
 	
 	update(){
@@ -116,6 +122,6 @@ function draw(){
 	clear();
 	for (dot of dots){
 		dot.update();
-		// dot.draw();
+		dot.draw();
 	}
 }
