@@ -9,6 +9,8 @@ const margin = 100;
 const rows = Math.round((window.innerWidth-2*margin)*cols/(window.innerHeight-2*margin));
 var dots = [];
 const numCircles = 8;
+// 0 = none, 1 = circle, 2 = grid
+var mode = 0;
 
 class Dot{
 	constructor(){
@@ -24,6 +26,8 @@ class Dot{
 		this.tweenStartX = 0;
 		this.tweenStartY = 0;
 		this.tweening = false;
+		this.baseAngle = 0;
+		this.angle = 0;
 	}
 	
 	drawDot(){
@@ -51,10 +55,10 @@ class Dot{
 	}
 	
 	draw(){
-		this.drawBaseDot();
+		// this.drawBaseDot();
 		// this.drawDot();
 		// this.drawLine();
-		// this.drawCircle();
+		this.drawCircle()
 	}
 	
 	mouseVersion(){
@@ -85,28 +89,40 @@ class Dot{
 		// console.log(millis());
 		let t = millis()*0.0005;
 		// can just replace with offset rather than baseX/baseY twice
-		this.x = this.baseX + sin((t*(this.xi+0.0001*Math.PI/4)*2) + (this.yi*Math.PI/2))*10;
-		this.y = this.baseY + cos((t*(this.xi+0.0001*Math.PI/4)*2) + (this.yi*Math.PI/2))*10;
-		this.radius = 5+ sin((t*(this.xi+0.0001*Math.PI/4)*2) + (this.yi*Math.PI/2))*10;
+		if (mode == 1){
+			// this.x = this.baseX + sin((t*(this.xi+0.0001*Math.PI/4)*2) + ((this.baseAngle/10)*Math.PI/2))*10;
+			// this.y = this.baseY + cos((t*(this.xi+0.0001*Math.PI/4)*2) + ((this.baseAngle/10)*Math.PI/2))*10;
+			// this.radius = 5+ sin((t*(this.xi+0.0001*Math.PI/4)*2) + ((this.baseAngle/10)*Math.PI/2))*10;
+			
+			// All the same
+			// this.radius = 10+ cos(2*t)*8;
+			
+			// By layer
+			this.radius = 10 + cos(2*(t + this.xi))*8;
+			
+			// By pos in layer, double sided
+			// this.radius = 10 + cos(2*(t + this.baseAngle))*8;
+			
+			// By pos in layer, single
+			// this.radius = 10 + cos(2*(t + this.baseAngle/2))*8;
+		} else {
+			this.x = this.baseX + sin((t*(this.xi+0.0001*Math.PI/4)*2) + (this.yi*Math.PI/2))*10;
+			this.y = this.baseY + cos((t*(this.xi+0.0001*Math.PI/4)*2) + (this.yi*Math.PI/2))*10;
+			this.radius = 5+ sin((t*(this.xi+0.0001*Math.PI/4)*2) + (this.yi*Math.PI/2))*10;
+		}
 	}
 	
 	rotate(){
-		var outerR = (height/2) - margin;
-		var r = outerR * (this.xi-1)/numCircles;
-		var distBetween = 30;
-		var numInLayer = Math.round((2*r*Math.PI)/distBetween);
-		// could move all this to a class attribute, since angle wont change.
-		var angle = (2*Math.PI)/(numInLayer);
 		let t = millis()*0.0005;
 		// Rotate with varying speeds:
 		// this.baseX = centerX + (r*cos( angle*(this.yi )+  (0.5*this.xi*sin(t*0.5))));
 		// this.baseY = centerY + (r*sin( angle*(this.yi ) + (0.5*this.xi*sin(t*0.5))));
 		// Rotate with varying speeds, inverse:
-		this.baseX = centerX + (r*cos( angle*(this.yi )+  (0.5*(numCircles+1-this.xi)*sin(t*0.5))));
-		this.baseY = centerY + (r*sin( angle*(this.yi ) + (0.5*(numCircles+1-this.xi)*sin(t*0.5))));
+		// this.baseX = centerX + (this.yi*10*cos( this.angle*(this.yi )+  (0.5*(numCircles+1-this.xi)*sin(t*0.5))));
+		// this.baseY = centerY + (this.yi*10*sin( this.angle*(this.yi ) + (0.5*(numCircles+1-this.xi)*sin(t*0.5))));
 		// Rotate equally with time:
-		// this.baseX = centerX + (r*cos( angle*(this.yi )+  t));
-		// this.baseY = centerY + (r*sin( angle*(this.yi ) + t));
+		this.baseX = centerX + (this.xi*30*cos( this.baseAngle+  t));
+		this.baseY = centerY + (this.xi*30*sin( this.baseAngle + t));
 	}
 	
 	setTweenTarget(targetX, targetY){
@@ -119,21 +135,24 @@ class Dot{
 	}
 	
 	tweenToTarget(){
-		this.baseX = this.baseX + (this.targetX-this.tweenStartX)/10;
-		this.baseY = this.baseY + (this.targetY-this.tweenStartY)/10;
+		this.baseX = this.baseX + (this.targetX-this.tweenStartX)/100;
+		this.baseY = this.baseY + (this.targetY-this.tweenStartY)/100;
 		if (dist(this.baseX, this.baseY, this.targetX, this.targetY)<2){
 			this.tweening = false;
+			this.baseX = this.targetX;
+			this.baseY = this.targetY;
 		}
 	}
 	
 	update(){
-		this.mouseVersion();
-		// this.sinUpdate();
+		// this.mouseVersion();
+		this.sinUpdate();
 		if (this.tweening){
 			this.tweenToTarget();
 		} else {
-			this.rotate();
+			// this.rotate();
 		}
+		
 	}
 }
 
@@ -176,9 +195,11 @@ function setupCircle(){
 // https://math.stackexchange.com/questions/1681461/fit-2600-equally-spaced-points-on-concentric-circles
 function setupCircle2(){
 	var numDots = cols * rows;
+	console.log("numdots: "+numDots);
 	var layers = (Math.sqrt(Math.PI) * Math.sqrt(4*numDots + Math.PI) - Math.PI)/(2*Math.PI);
 	layers = Math.round(layers);
-	var approxNumDots= 0;
+	// Dots gained by following floor of 2.k.pi, plus add one for dot in center
+	var approxNumDots= 1;
 	for (var i = 1; i<=layers; i++){
 		approxNumDots += Math.floor(2*i *Math.PI);
 	}
@@ -186,6 +207,12 @@ function setupCircle2(){
 	if (remainingDots > 0){
 		console.log("remaiing : "+remainingDots);
 	}
+	var dot = new Dot;
+	dot.baseX = centerX;
+	dot.baseY = centerY;
+	dot.xi = 0;
+	dot.yi = 0;
+	dots.push(dot);
 	var newRemaining = remainingDots;
 	for (var i = 1; i<=layers; i++){
 		var baseNumInLayer = Math.floor(2*i *Math.PI);
@@ -197,43 +224,118 @@ function setupCircle2(){
 		}
 		var numInLayer = baseNumInLayer + extraInLayer;
 		var angle = 2*Math.PI/numInLayer;
+		var layerRadius = i * 30;
 		for (var j = 0; j<numInLayer; j++){
 			var dot = new Dot;
-			dot.baseX = centerX + (r*cos(angle*j));
-			dot.baseY = centerY + (r*sin(angle*j));
-			dot.angle = angle*j;
+			dot.baseX = centerX + (layerRadius*cos(angle*j));
+			dot.baseY = centerY + (layerRadius*sin(angle*j));
+			dot.baseAngle = angle*j;
 			dot.xi = i;
 			dot.yi = j;
 			dots.push(dot);
 		}
 	}
+	console.log("dots"+dots.length);
+}
+
+function moveToCircle(){
+	var numDots = cols * rows;
+	var layers = (Math.sqrt(Math.PI) * Math.sqrt(4*numDots + Math.PI) - Math.PI)/(2*Math.PI);
+	layers = Math.round(layers);
+	// Dots gained by following floor of 2.k.pi, plus add one for dot in center
+	var approxNumDots= 1;
+	for (var i = 1; i<=layers; i++){
+		approxNumDots += Math.floor(2*i *Math.PI);
+	}
+	var remainingDots = numDots - approxNumDots;
+	if (remainingDots > 0){
+		console.log("remaiing : "+remainingDots);
+	}
+	var dot = dots[0];
+	dot.baseX = centerX;
+	dot.baseY = centerY;
+	dot.xi = 0;
+	dot.yi = 0;
+	var newRemaining = remainingDots;
+	var dotIndex = 1;
+	for (var i = 1; i<=layers; i++){
+		var baseNumInLayer = Math.floor(2*i *Math.PI);
+		var extraInLayer =  Math.floor(remainingDots*(baseNumInLayer)/numDots);
+		if (i == layers){
+			extraInLayer = newRemaining;
+		} else {
+			newRemaining -= extraInLayer;
+		}
+		var numInLayer = baseNumInLayer + extraInLayer;
+		var angle = 2*Math.PI/numInLayer;
+		var layerRadius = i * 30;
+		for (var j = 0; j<numInLayer; j++){
+			var dot = dots[dotIndex];
+			dotIndex++;
+			let targetX = centerX + (layerRadius*cos(angle*j));
+			let targetY = centerY + (layerRadius*sin(angle*j));
+			dot.setTweenTarget(targetX, targetY);
+			dot.baseAngle = angle*j;
+			dot.xi = i;
+			dot.yi = j;
+		}
+	}
+	mode = 1;
+}
+
+function moveToGrid(){
+	var dotIndex = 0;
+	for (var i= 0; i<rows; i++){
+		for (var j = 0; j<cols; j++){
+			var dot = dots[dotIndex];
+			dotIndex++;
+			let targetX = ((i/(rows-1)) * (width-200))    + 100;
+			let targetY = ((j/(cols-1)) * (height-200))   + 100;
+			dot.setTweenTarget(targetX, targetY);
+			dot.xi = i+1;
+			dot.yi = j+1;
+		}
+	}
+	mode = 2;
 }
 
 function moveAllToCenter(){
 	for (dot of dots){
 		dot.setTweenTarget(centerX, centerY);
 	}
+	mode = 1;
+}
+
+function initDots(){
+	var numDots = rows * cols;
+	dots = [];
+	for (let i = 0; i<numDots; i++){
+		var dot = new Dot;
+		dot.baseX = centerX;
+		dot.baseY = centerY;
+		dots.push(dot);
+	}	
 }
 
 function setup(){
 	width = window.innerWidth;
 	height = window.innerHeight;
 	createCanvas(width, height);
+	initDots();
 	// setupGrid();
-	setupCircle();
-	setupCircle2();
+	// setupCircle();
+	// setupCircle2();
+	setTimeout(moveToCircle, 1000);
+	setInterval(moveToGrid, 16000);
+	setTimeout(function(){setInterval(moveToCircle, 16000)}, 8000);
 }
 
 function draw(){
 	clear();
-	let t = millis()/1000;
-	if (t > 5){
-		moveAllToCenter();
-	}
 	for (dot of dots){
 		dot.update();
 		dot.draw();
 	}
-	
-	
 }
+
+
